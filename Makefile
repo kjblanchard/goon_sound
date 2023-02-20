@@ -1,7 +1,7 @@
 .PHONY: config configure build release clean rebuild run lldb debug doc windows
 
 BUILD_FOLDER = build/bin
-BINARY_NAME = supergoon_dash
+BINARY_NAME = test
 BINARY_PATH = $(BUILD_FOLDER)/$(BINARY_NAME)
 
 all: build
@@ -25,7 +25,7 @@ rebuild: clean configure build install
 wrebuild: clean windows build install
 
 install:
-	@cmake --install build
+	# @cmake --install build
 
 package:
 	cd ./build && tar -czf game.tar.gz bin

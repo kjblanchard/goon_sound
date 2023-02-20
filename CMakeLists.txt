@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.2)
 
-#Build universal if we are on our m1 mac, also requires using xcode as the build engine when doing this.  -G Xcode.
+# Build universal if we are on our m1 mac, also requires using xcode as the build engine when doing this.  -G Xcode.
 # Must be called before project.
-if (UNIX AND APPLE)
+if(UNIX AND APPLE)
     set(CMAKE_OSX_ARCHITECTURES arm64;x86_64)
 endif(UNIX AND APPLE)
 
@@ -12,13 +12,18 @@ project(goon_sound
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
-#Add in the windows cmake path to prefix, so that we can find things.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# Add in the windows cmake path to prefix, so that we can find things.
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /c/cmake)
 set(CMAKE_OSX_DEPLOYMENT_TARGET 12.3)
 
-#Add all of our source files
+option(SHOULD_BUILD_TEST OFF)
+option(DEBUG_VARS OFF)
+
+# Add all of our source files
 file(GLOB FILES src/**/*.c)
+
 # Build a win32 bundle when building on win, and macos when building on ios,  Remove macosbundle as its easier to copy the files and debug #Remove win32 as couldn't build with sdl2
 add_library(goon_sound
     STATIC
@@ -28,15 +33,14 @@ set_property(TARGET goon_sound PROPERTY C_STANDARD 99)
 add_subdirectory(external/openal-soft)
 find_package(PkgConfig)
 
-target_compile_definitions(goon_sound PRIVATE AL_LIBTYPE_STATIC )
+target_compile_definitions(goon_sound PRIVATE AL_LIBTYPE_STATIC)
 
-#Potentially needed for windows / unix.
-#find_package(VORBIS
-#    NAMES vorbis Vorbis
-#    PATH_SUFFIXES .a
-#    COMPONENTS REQUIRED VORBISFILE VORBIS VORBISENC
-#    REQUIRED)
-
+# Potentially needed for windows / unix.
+# find_package(VORBIS
+# NAMES vorbis Vorbis
+# PATH_SUFFIXES .a
+# COMPONENTS REQUIRED VORBISFILE VORBIS VORBISENC
+# REQUIRED)
 find_library(LIB_VORBIS
     REQUIRED
     PATH_SUFFIXES .a
@@ -45,7 +49,7 @@ find_library(LIB_VORBIS
 
 find_library(LIB_VORBISFILE
     REQUIRED
-    NAMES  libvorbisfile vorbisfile vorbisfile.a vorbisfile.dll
+    NAMES libvorbisfile vorbisfile vorbisfile.a vorbisfile.dll
     HINTS /usr/local/lib)
 
 find_package(
@@ -54,33 +58,38 @@ find_package(
     PATH_SUFFIXES .a
     REQUIRED)
 
-#For Debug, print aout all variables.
-get_cmake_property(_variableNames VARIABLES)
-list (SORT _variableNames)
-foreach (_variableName ${_variableNames})
-   message(STATUS "${_variableName}=${${_variableName}}")
-endforeach()
+# For Debug, print aout all variables.
+if(DEBUG_VARS)
+    get_cmake_property(_variableNames VARIABLES)
+    list(SORT _variableNames)
 
-#Order matters
+    foreach(_variableName ${_variableNames})
+        message(STATUS "${_variableName}=${${_variableName}}")
+    endforeach()
+endif(DEBUG_VARS)
+
+# Order matters
 target_link_libraries(goon_sound
     PUBLIC ${LIB_VORBISFILE} ${LIB_VORBIS} ${OGG_LIBRARIES} OpenAL
-    INTERFACE )
+    INTERFACE)
 
 target_include_directories(goon_sound
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/"
-    )
-
-target_compile_options(goon_sound PUBLIC -std=c99 -Wall  -pedantic
--DDEBUG_BUILD_ENABLED)
-
-file(GLOB MAIN main.c)
-add_executable(test MAIN)
-target_link_libraries(test
-    PUBLIC
-    PRIVATE  goon_sound
 )
 
-target_include_directories(test
-    PUBLIC
-    PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src"
+target_compile_options(goon_sound PUBLIC -std=c99 -Wall -pedantic
+    -DDEBUG_BUILD_ENABLED)
+
+if(SHOULD_BUILD_TEST)
+    file(GLOB MAIN main.c)
+    add_executable(test MAIN)
+    target_link_libraries(test
+        PUBLIC
+        PRIVATE goon_sound
     )
+
+    target_include_directories(test
+        PUBLIC
+        PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    )
+endif(SHOULD_BUILD_TEST)
