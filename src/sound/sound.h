@@ -33,7 +33,22 @@ extern "C"
         Sg_Loaded_Sfx *loaded_sfx;
     } Sfx;
 
-    Bgm *LoadBgmFromLua(char *filename, float loop_begin, float loop_end);
+    /**
+     * @brief Allocates space for a bgm and returns it.
+     *
+     * @param filename The filename to load
+     * @return Bgm* A pointer to the bgm memory
+     */
+    Bgm *LoadBgm(char *filename);
+    /**
+     * @brief Updates the times on a bgm for you, as a convienance function.
+     *
+     * @param bgm
+     * @param loop_begin
+     * @param loop_end
+     * @return Bgm*
+     */
+    Bgm *UpdateBgmLoopTimes(Bgm* bgm, float loop_begin, float loop_end);
     Sfx *LoadSfxFromLua(char *filename);
     /**
      * @brief Load the Sound backend, this must be called before any other functions are available.

@@ -15,31 +15,35 @@ int InitializeSound()
     return InitializeAl();
 }
 
-Bgm* LoadBgmFromLua(char *filename_suffix, float loop_begin, float loop_end)
+Bgm *LoadBgm(char *filename)
 {
     Bgm *bgm = malloc(sizeof(*bgm));
     // We need to add one here, since strlen and len do not include their null terminator, and we need that in our string and we are going to combine things.
-    size_t name_length = strlen(sfx_prefix) + strlen(filename_suffix) + 1;
+    size_t name_length = strlen(sfx_prefix) + strlen(filename) + 1;
     char *full_name = malloc(name_length * sizeof(char));
-    snprintf(full_name, name_length, "%s%s", sfx_prefix, filename_suffix);
+    snprintf(full_name, name_length, "%s%s", sfx_prefix, filename);
     bgm->bgm_name = full_name;
-    bgm->loop_begin = loop_begin;
-    bgm->loop_end = loop_end;
     return bgm;
 }
 
-Sfx* LoadSfxFromLua(char* filename)
+Bgm *UpdateBgmLoopTimes(Bgm* bgm, float loop_begin, float loop_end)
 {
-        Sfx *sfx = malloc(sizeof(*sfx));
-        size_t name_length = strlen(sfx_prefix) + strlen(filename) + 1;
-        char *full_name = malloc(name_length * sizeof(char));
-        snprintf(full_name, name_length, "%s%s", sfx_prefix, filename);
-        sfx->sfx_name = full_name;
-        sfx->loaded_sfx = NULL;
-        return sfx;
+    bgm->loop_begin = loop_begin;
+    bgm->loop_end = loop_end;
 }
 
-int PlayBgm(Bgm* bgm, float volume)
+Sfx *LoadSfxFromLua(char *filename)
+{
+    Sfx *sfx = malloc(sizeof(*sfx));
+    size_t name_length = strlen(sfx_prefix) + strlen(filename) + 1;
+    char *full_name = malloc(name_length * sizeof(char));
+    snprintf(full_name, name_length, "%s%s", sfx_prefix, filename);
+    sfx->sfx_name = full_name;
+    sfx->loaded_sfx = NULL;
+    return sfx;
+}
+
+int PlayBgm(Bgm *bgm, float volume)
 {
     return PlayBgmAl(bgm->bgm_name, &bgm->loop_begin, &bgm->loop_end, volume);
 }
@@ -57,7 +61,7 @@ int UnPauseBgm()
     return UnpauseBgmAl();
 }
 
-int PlaySfxOneShot(Sfx* sfx, float volume)
+int PlaySfxOneShot(Sfx *sfx, float volume)
 {
     if (!sfx->loaded_sfx)
     {
@@ -67,7 +71,7 @@ int PlaySfxOneShot(Sfx* sfx, float volume)
     return 1;
 }
 
-int LoadSfx(Sfx* sfx)
+int LoadSfx(Sfx *sfx)
 {
     if (!sfx->loaded_sfx)
     {
@@ -76,7 +80,7 @@ int LoadSfx(Sfx* sfx)
     return (sfx->loaded_sfx != NULL) ? 1 : 0;
 }
 
-int UnloadSfx(Sfx* sfx)
+int UnloadSfx(Sfx *sfx)
 {
     if (sfx->loaded_sfx)
     {
