@@ -23,6 +23,7 @@ Bgm *LoadBgm(char *filename)
     char *full_name = malloc(name_length * sizeof(char));
     snprintf(full_name, name_length, "%s%s", sfx_prefix, filename);
     bgm->bgm_name = full_name;
+    bgm->loops = -1;
     return bgm;
 }
 
@@ -43,9 +44,9 @@ Sfx *LoadSfxFromLua(char *filename)
     return sfx;
 }
 
-int PlayBgm(Bgm *bgm, float volume)
+int PlayBgm(Bgm *bgm, float volume, short loops)
 {
-    return PlayBgmAl(bgm->bgm_name, &bgm->loop_begin, &bgm->loop_end, volume);
+    return PlayBgmAl(bgm->bgm_name, &bgm->loop_begin, &bgm->loop_end, volume, loops);
 }
 
 int StopBgm(int stop_at_end)

@@ -31,6 +31,8 @@ typedef struct StreamPlayer
     short *membuf;
     ALenum format;
     unsigned short file_loaded;
+    unsigned short is_playing;
+    short loops;
 } StreamPlayer;
 /**
  * @brief The Sfx player that is used to handle playing sfx
@@ -149,7 +151,7 @@ static void ClosePlayerFile(StreamPlayer *player);
  *
  * @return
  */
-static int StartPlayer(StreamPlayer *player);
+static int StartPlayer(StreamPlayer *player, short loops);
 /**
  * @brief Updates the passed in player, this is needed as it processes the stream and reads bytes and loads buffers.
  *
@@ -256,6 +258,7 @@ static StreamPlayer *NewPlayer()
     // TODO can we actually load more here?  Seems like our buffers arent fully loading for some reason.
     size_t data_read_size = (size_t)(BGM_BUFFER_SAMPLES);
     player->membuf = malloc(data_read_size);
+    player->is_playing = 0;
     return player;
 }
 
@@ -286,10 +289,10 @@ int PlaySfxAl(Sg_Loaded_Sfx *sound_file, float volume)
     return 1;
 }
 
-int PlayBgmAl(const char *filename, double *loop_begin, double *loop_end, float volume)
+int PlayBgmAl(const char *filename, double *loop_begin, double *loop_end, float volume, short loops)
 {
     PreBakeBgm(bgm_player, filename, loop_begin, loop_end, volume);
-    if (!StartPlayer(bgm_player))
+    if (!StartPlayer(bgm_player, loops))
     {
         ClosePlayerFile(bgm_player);
         return 0;
@@ -327,7 +330,7 @@ static int PreBakeBuffers(StreamPlayer *player)
     return 1;
 }
 
-static int StartPlayer(StreamPlayer *player)
+static int StartPlayer(StreamPlayer *player, short loops)
 {
     alSourcePlay(player->source);
     if (alGetError() != AL_NO_ERROR)
@@ -335,6 +338,10 @@ static int StartPlayer(StreamPlayer *player)
         fprintf(stderr, "Error starting playback\n");
         return 0;
     }
+    printf("Amount of loops is %d", loops);
+    player->loops = loops;
+    printf("Amount of loops is %d", player->loops);
+    player->is_playing = 1;
     return 1;
 }
 
@@ -405,6 +412,7 @@ static int StopBgm(StreamPlayer *player)
 {
     alSourceStop(player->source);
     alSourcei(player->source, AL_BUFFER, 0);
+    player->is_playing = 0;
     ClosePlayerFile(player);
     if (alGetError() != AL_NO_ERROR)
     {
@@ -426,6 +434,7 @@ static int PauseBgm(StreamPlayer *player)
     if (state != AL_PLAYING)
         return 0;
     alSourcePause(bgm_player->source);
+    player->is_playing = 0;
     return 1;
 }
 
@@ -436,6 +445,7 @@ int UnpauseBgmAl()
     if (state == AL_PAUSED)
         alSourcePause(bgm_player->source);
     alSourcePlay(bgm_player->source);
+    bgm_player->is_playing = 1;
     return 0;
 }
 
@@ -529,6 +539,8 @@ void UpdateAl()
 
 static int UpdatePlayer(StreamPlayer *player)
 {
+    if (!player->is_playing)
+        return 1;
     ALint processed_buffers, state;
     alGetSourcei(player->source, AL_SOURCE_STATE, &state);
     alGetSourcei(player->source, AL_BUFFERS_PROCESSED, &processed_buffers);
@@ -620,7 +632,16 @@ static int HandleProcessedBuffer(StreamPlayer *player)
     }
     if (buf_flags == Buff_Fill_MusicEnded || buf_flags == Buff_Fill_MusicHitLoopPoint)
     {
-        RestartStream(player);
+        switch (player->loops)
+        {
+        case 0:
+            player->is_playing = 0;
+            return 1;
+        default:
+            --player->loops;
+        case -1:
+            RestartStream(player);
+        }
     }
     return 1;
 }

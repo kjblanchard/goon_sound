@@ -25,10 +25,11 @@ int InitializeAl();
  * @param filename The file to stream from
  * @param loop_begin The point the loop should begin when looping, 0 means beginning.
  * @param loop_end The point the loop should end and move to the loop)begin.  0 means end of file.
+ * @param loops How many times we should loop this bgm, -1 means forever.
  *
  * @return 1 on Success, 0 on failure.
  */
-int PlayBgmAl(const char *filename, double *loop_begin, double *loop_end, float volume);
+int PlayBgmAl(const char *filename, double *loop_begin, double *loop_end, float volume, short loops);
 int StopBgmAl();
 /**
  * @brief Pauses the playing bgm_player.

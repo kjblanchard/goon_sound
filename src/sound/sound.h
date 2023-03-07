@@ -21,6 +21,7 @@ extern "C"
         char *bgm_name;
         double loop_begin;
         double loop_end;
+        int loops;
 
     } Bgm;
 
@@ -64,7 +65,7 @@ extern "C"
      *
      * @return 1 if Successful, 0 if failed to start.
      */
-    int PlayBgm(Bgm *bgm, float volume);
+    int PlayBgm(Bgm *bgm, float volume, short loops);
     /**
      * @brief Stops a playing bgm.  If stop_at_end is true, then it will stop playing at the end of the song.
      *
