@@ -11,6 +11,7 @@
 #include "../base/stack.h"
 #include "../base/vector.h"
 
+#define TOTAL_BGM_PLAYERS 1
 #define BGM_NUM_BUFFERS 4
 #define MAX_SFX_SOUNDS 10
 #define BGM_BUFFER_SAMPLES 8192  // 8kb
