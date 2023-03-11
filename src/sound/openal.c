@@ -249,6 +249,7 @@ int PlaySfxAl(Sg_Loaded_Sfx *sound_file, float volume)
 
 int PlayBgmAl(StreamPlayer *player, short loops)
 {
+    printf("Player num is %d", player->source);
     if (!StartPlayer(player, loops))
     {
         ClosePlayerFile(player);
@@ -295,9 +296,7 @@ static int StartPlayer(StreamPlayer *player, short loops)
         fprintf(stderr, "Error starting playback\n");
         return 0;
     }
-    printf("Amount of loops is %d", loops);
     player->loops = loops;
-    printf("Amount of loops is %d", player->loops);
     player->is_playing = 1;
     return 1;
 }

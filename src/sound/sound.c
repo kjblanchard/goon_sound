@@ -29,6 +29,7 @@ Bgm *NewBgm(char *filename)
     bgm->bgm_name = filename;
     bgm->loops = -1;
     bgm->is_preloaded = 0;
+    bgm->is_ambient = 0;
     return bgm;
 }
 
@@ -36,7 +37,7 @@ int LoadBgm(Bgm *bgm, float volume)
 {
     if (bgm->is_preloaded)
         return 1;
-    return LoadBgmAl(players[0], bgm->bgm_name, &bgm->loop_begin, &bgm->loop_end, volume);
+    return LoadBgmAl(players[bgm->is_ambient], bgm->bgm_name, &bgm->loop_begin, &bgm->loop_end, volume);
 }
 
 Sfx *NewSfx(char *filename)
@@ -47,14 +48,14 @@ Sfx *NewSfx(char *filename)
     return sfx;
 }
 
-int PlayBgm(Bgm *bgm, float volume, short loops, int player)
+int PlayBgm(Bgm* bgm)
 {
-    return PlayBgmAl(players[0], loops);
+    return PlayBgmAl(players[bgm->is_ambient], bgm->loops);
 }
 
-int StopBgm()
+int StopBgm(Bgm* bgm)
 {
-    return StopBgmAl(players[0]);
+    return StopBgmAl(players[bgm->is_ambient]);
 }
 int PauseBgm()
 {
@@ -103,5 +104,4 @@ int UnloadSfx(Sfx *sfx)
 void UpdateSound()
 {
     UpdateAl(players, TOTAL_BGM_PLAYERS);
-    // UpdateAl(players, 2);
 }

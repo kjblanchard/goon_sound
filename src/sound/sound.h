@@ -23,6 +23,7 @@ extern "C"
         double loop_end;
         int is_preloaded;
         int loops;
+        int is_ambient;
 
     } Bgm;
 
@@ -73,7 +74,7 @@ extern "C"
      *
      * @return 1 if Successful, 0 if failed to start.
      */
-    int PlayBgm(Bgm *bgm, float volume, short loops, int player);
+    int PlayBgm(Bgm* bgm);
     /**
      * @brief Stops a playing bgm.  If stop_at_end is true, then it will stop playing at the end of the song.
      *
@@ -81,7 +82,7 @@ extern "C"
      *
      * @return 1 if successful, 0 if failed.
      */
-    int StopBgm();
+    int StopBgm(Bgm* bgm);
     int PauseBgm();
     int UnPauseBgm();
     /**
