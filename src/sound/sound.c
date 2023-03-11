@@ -5,61 +5,64 @@
 #include "openal.h"
 #include "sound.h"
 
-/**
- * @brief The prefix that we should add to the config file so that we look in the right location.
- */
-static const char *sfx_prefix = "assets/";
+#define TOTAL_BGM_PLAYERS 2
+
+static StreamPlayer *players[TOTAL_BGM_PLAYERS];
 
 int InitializeSound()
 {
-    return InitializeAl();
+
+    int result = InitializeAl();
+    if (!result)
+    {
+        puts("It's borked!");
+    }
+    for (size_t i = 0; i < TOTAL_BGM_PLAYERS; i++)
+    {
+        players[i] = NewPlayer();
+    }
 }
 
-Bgm *LoadBgm(char *filename)
+Bgm *NewBgm(char *filename)
 {
     Bgm *bgm = malloc(sizeof(*bgm));
-    // We need to add one here, since strlen and len do not include their null terminator, and we need that in our string and we are going to combine things.
-    size_t name_length = strlen(sfx_prefix) + strlen(filename) + 1;
-    char *full_name = malloc(name_length * sizeof(char));
-    snprintf(full_name, name_length, "%s%s", sfx_prefix, filename);
-    bgm->bgm_name = full_name;
+    bgm->bgm_name = filename;
     bgm->loops = -1;
+    bgm->is_preloaded = 0;
     return bgm;
 }
 
-Bgm *UpdateBgmLoopTimes(Bgm* bgm, float loop_begin, float loop_end)
+int LoadBgm(Bgm *bgm, float volume)
 {
-    bgm->loop_begin = loop_begin;
-    bgm->loop_end = loop_end;
+    if (bgm->is_preloaded)
+        return 1;
+    return LoadBgmAl(players[0], bgm->bgm_name, &bgm->loop_begin, &bgm->loop_end, volume);
 }
 
-Sfx *LoadSfxFromLua(char *filename)
+Sfx *NewSfx(char *filename)
 {
     Sfx *sfx = malloc(sizeof(*sfx));
-    size_t name_length = strlen(sfx_prefix) + strlen(filename) + 1;
-    char *full_name = malloc(name_length * sizeof(char));
-    snprintf(full_name, name_length, "%s%s", sfx_prefix, filename);
-    sfx->sfx_name = full_name;
+    sfx->sfx_name = filename;
     sfx->loaded_sfx = NULL;
     return sfx;
 }
 
-int PlayBgm(Bgm *bgm, float volume, short loops)
+int PlayBgm(Bgm *bgm, float volume, short loops, int player)
 {
-    return PlayBgmAl(bgm->bgm_name, &bgm->loop_begin, &bgm->loop_end, volume, loops);
+    return PlayBgmAl(players[0], loops);
 }
 
-int StopBgm(int stop_at_end)
+int StopBgm()
 {
-    return StopBgmAl();
+    return StopBgmAl(players[0]);
 }
 int PauseBgm()
 {
-    return PauseBgmAl();
+    return PauseBgmAl(players[0]);
 }
 int UnPauseBgm()
 {
-    return UnpauseBgmAl();
+    return UnpauseBgmAl(players[0]);
 }
 
 int PlaySfxOneShot(Sfx *sfx, float volume)
@@ -99,5 +102,6 @@ int UnloadSfx(Sfx *sfx)
 
 void UpdateSound()
 {
-    UpdateAl();
+    UpdateAl(players, TOTAL_BGM_PLAYERS);
+    // UpdateAl(players, 2);
 }

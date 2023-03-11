@@ -11,30 +11,6 @@
 #include "../base/stack.h"
 #include "../base/vector.h"
 
-#define TOTAL_BGM_PLAYERS 1
-#define BGM_NUM_BUFFERS 4
-#define MAX_SFX_SOUNDS 10
-#define BGM_BUFFER_SAMPLES 8192  // 8kb
-#define VORBIS_REQUEST_SIZE 4096 // Max size to request from vorbis to load.
-/**
- * @brief The BGM streaming player.  Probably only need one of these at any time
- *
- */
-typedef struct StreamPlayer
-{
-    ALuint buffers[BGM_NUM_BUFFERS];
-    ALuint source;
-    ogg_int64_t loop_point_begin;
-    ogg_int64_t loop_point_end;
-    ogg_int64_t total_bytes_read_this_loop;
-    OggVorbis_File vbfile;
-    vorbis_info *vbinfo;
-    short *membuf;
-    ALenum format;
-    unsigned short file_loaded;
-    unsigned short is_playing;
-    short loops;
-} StreamPlayer;
 /**
  * @brief The Sfx player that is used to handle playing sfx
  */
@@ -59,35 +35,17 @@ typedef enum BufferFillFlags
 /**
  * @brief  The bgm player that we use, currently only one bgm player can exist.
  */
-static StreamPlayer *bgm_player;
+// static StreamPlayer *bgm_player;
 /**
  * @brief The sfx player, currently only one sfx player can exist
  */
 static SfxPlayer *sfx_player;
-/**
- * @brief Constructor for a BgmPlayer
- *
- * @return A initialized bgmplayer
- */
-static StreamPlayer *NewPlayer();
 /**
  * @brief Constructor for a SFX player
  *
  * @return A ready to use sfx player.
  */
 static SfxPlayer *NewSfxPlayer();
-/**
- * @brief Gets the BGM source ready to play, and preloads the BGM buffers with data.
- *
- * @param player The BGM player to load.
- * @param filename The filename to open and load.
- * @param loop_begin The seconds where the loop should begin.
- * @param loop_end The seconds where the loop should end.
- * @param volume The volume that we should play, between 0 and 1.
- *
- * @return
- */
-static int PreBakeBgm(StreamPlayer *player, const char *filename, double *loop_begin, double *loop_end, float volume);
 /**
  * @brief Preloads all of the buffers in a player
  *
@@ -230,12 +188,12 @@ int InitializeAl()
 {
     if (InitAL() != 0)
         return 0;
-    bgm_player = NewPlayer();
+    // bgm_player = NewPlayer();
     sfx_player = NewSfxPlayer();
     return 1;
 }
 
-static StreamPlayer *NewPlayer()
+StreamPlayer *NewPlayer()
 {
     StreamPlayer *player;
     player = calloc(1, sizeof(*player));
@@ -256,7 +214,6 @@ static StreamPlayer *NewPlayer()
     alSourcei(player->source, AL_ROLLOFF_FACTOR, 0);
     result = alGetError();
     assert(result == AL_NO_ERROR && "Could not set source rolloff");
-    // TODO can we actually load more here?  Seems like our buffers arent fully loading for some reason.
     size_t data_read_size = (size_t)(BGM_BUFFER_SAMPLES);
     player->membuf = malloc(data_read_size);
     player->is_playing = 0;
@@ -290,20 +247,19 @@ int PlaySfxAl(Sg_Loaded_Sfx *sound_file, float volume)
     return 1;
 }
 
-int PlayBgmAl(const char *filename, double *loop_begin, double *loop_end, float volume, short loops)
+int PlayBgmAl(StreamPlayer *player, short loops)
 {
-    PreBakeBgm(bgm_player, filename, loop_begin, loop_end, volume);
-    if (!StartPlayer(bgm_player, loops))
+    if (!StartPlayer(player, loops))
     {
-        ClosePlayerFile(bgm_player);
+        ClosePlayerFile(player);
         return 0;
     }
     return 1;
 }
 
-static int PreBakeBgm(StreamPlayer *player, const char *filename, double *loop_begin, double *loop_end, float volume)
+int LoadBgmAl(StreamPlayer *player, const char *filename, double *loop_begin, double *loop_end, float volume)
 {
-    if (!OpenPlayerFile(bgm_player, filename, loop_begin, loop_end))
+    if (!OpenPlayerFile(player, filename, loop_begin, loop_end))
         return 0;
     alSourceRewind(player->source);
     alSourcei(player->source, AL_BUFFER, 0);
@@ -372,7 +328,7 @@ static int OpenPlayerFile(StreamPlayer *player, const char *filename, double *lo
         ov_clear(&player->vbfile);
         return 0;
     }
-    GetLoopPoints(bgm_player, loop_begin, loop_end);
+    GetLoopPoints(player, loop_begin, loop_end);
     return 1;
 }
 
@@ -404,9 +360,9 @@ static void GetLoopPoints(StreamPlayer *player, double *loop_begin, double *loop
         ov_raw_seek(&player->vbfile, 0);
 }
 
-int StopBgmAl()
+int StopBgmAl(StreamPlayer *player)
 {
-    return StopBgm(bgm_player);
+    return StopBgm(player);
 }
 
 static int StopBgm(StreamPlayer *player)
@@ -423,30 +379,30 @@ static int StopBgm(StreamPlayer *player)
     return 1;
 }
 
-int PauseBgmAl()
+int PauseBgmAl(StreamPlayer *player)
 {
-    return PauseBgm(bgm_player);
+    return PauseBgm(player);
 }
 
 static int PauseBgm(StreamPlayer *player)
 {
     ALint state;
-    alGetSourcei(bgm_player->source, AL_SOURCE_STATE, &state);
+    alGetSourcei(player->source, AL_SOURCE_STATE, &state);
     if (state != AL_PLAYING)
         return 0;
-    alSourcePause(bgm_player->source);
+    alSourcePause(player->source);
     player->is_playing = 0;
     return 1;
 }
 
-int UnpauseBgmAl()
+int UnpauseBgmAl(StreamPlayer *player)
 {
     ALint state;
-    alGetSourcei(bgm_player->source, AL_SOURCE_STATE, &state);
+    alGetSourcei(player->source, AL_SOURCE_STATE, &state);
     if (state == AL_PAUSED)
-        alSourcePause(bgm_player->source);
-    alSourcePlay(bgm_player->source);
-    bgm_player->is_playing = 1;
+        alSourcePause(player->source);
+    alSourcePlay(player->source);
+    player->is_playing = 1;
     return 0;
 }
 
@@ -532,9 +488,13 @@ static int PlaySfxFile(SfxPlayer *player, Sg_Loaded_Sfx *sfx_file, float volume)
     return 1;
 }
 
-void UpdateAl()
+void UpdateAl(StreamPlayer** players, int players_to_update)
 {
-    UpdatePlayer(bgm_player);
+    for (size_t i = 0; i < players_to_update; i++)
+    {
+        UpdatePlayer(players[i]);
+    }
+
     UpdateSfxPlayer(sfx_player);
 }
 
@@ -699,11 +659,13 @@ static int RestartStream(StreamPlayer *player)
     return 0;
 }
 
-int CloseAl()
+int CloseAl(StreamPlayer *players, int players_to_update)
 {
-    DeletePlayer(bgm_player);
+    for (size_t i = 0; i < players_to_update; i++)
+    {
+        DeletePlayer(&players[i]);
+    }
     DeleteSfxPlayer(sfx_player);
-    bgm_player = NULL;
     CloseAL();
     return 0;
 }

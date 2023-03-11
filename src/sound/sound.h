@@ -21,6 +21,7 @@ extern "C"
         char *bgm_name;
         double loop_begin;
         double loop_end;
+        int is_preloaded;
         int loops;
 
     } Bgm;
@@ -40,7 +41,15 @@ extern "C"
      * @param filename The filename to load
      * @return Bgm* A pointer to the bgm memory
      */
-    Bgm *LoadBgm(char *filename);
+    Bgm *NewBgm(char *filename);
+
+    /**
+     * @brief Preloads parts of the bgm so that you get instant sound when you play it.
+     *
+     * @param bgm The bgm that you wish to load
+     * @return int 1 if successful, 0 if failure
+     */
+    int LoadBgm(Bgm *bgm, float volume);
     /**
      * @brief Updates the times on a bgm for you, as a convienance function.
      *
@@ -49,8 +58,7 @@ extern "C"
      * @param loop_end
      * @return Bgm*
      */
-    Bgm *UpdateBgmLoopTimes(Bgm* bgm, float loop_begin, float loop_end);
-    Sfx *LoadSfxFromLua(char *filename);
+    Sfx *NewSfx(char *filename);
     /**
      * @brief Load the Sound backend, this must be called before any other functions are available.
      *
@@ -65,7 +73,7 @@ extern "C"
      *
      * @return 1 if Successful, 0 if failed to start.
      */
-    int PlayBgm(Bgm *bgm, float volume, short loops);
+    int PlayBgm(Bgm *bgm, float volume, short loops, int player);
     /**
      * @brief Stops a playing bgm.  If stop_at_end is true, then it will stop playing at the end of the song.
      *
