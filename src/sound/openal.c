@@ -249,7 +249,6 @@ int PlaySfxAl(Sg_Loaded_Sfx *sound_file, float volume)
 
 int PlayBgmAl(StreamPlayer *player, short loops)
 {
-    printf("Player num is %d", player->source);
     if (!StartPlayer(player, loops))
     {
         ClosePlayerFile(player);
@@ -261,7 +260,10 @@ int PlayBgmAl(StreamPlayer *player, short loops)
 int LoadBgmAl(StreamPlayer *player, const char *filename, double *loop_begin, double *loop_end, float volume)
 {
     if (!OpenPlayerFile(player, filename, loop_begin, loop_end))
+    {
+        player->is_playing = 0;
         return 0;
+    }
     alSourceRewind(player->source);
     alSourcei(player->source, AL_BUFFER, 0);
     alSourcef(player->source, AL_GAIN, volume);

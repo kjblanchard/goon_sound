@@ -18,12 +18,13 @@ extern "C"
      */
     typedef struct Bgm
     {
-        char *bgm_name;
+        const char *bgm_name;
         double loop_begin;
         double loop_end;
         int is_preloaded;
         int loops;
         int is_ambient;
+        int is_paused;
 
     } Bgm;
 
@@ -83,8 +84,8 @@ extern "C"
      * @return 1 if successful, 0 if failed.
      */
     int StopBgm(Bgm* bgm);
-    int PauseBgm();
-    int UnPauseBgm();
+    int PauseBgm(Bgm* bgm);
+    int UnPauseBgm(Bgm* bgm);
     /**
      * @brief Plays a Sound effect once in its own buffer.  There is only a total of 10 buffers available for playing at a time. If the sound is not loaded, will load the sound
      *

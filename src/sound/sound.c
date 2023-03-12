@@ -30,6 +30,7 @@ Bgm *NewBgm(char *filename)
     bgm->loops = -1;
     bgm->is_preloaded = 0;
     bgm->is_ambient = 0;
+    bgm->is_paused = 0;
     return bgm;
 }
 
@@ -50,6 +51,7 @@ Sfx *NewSfx(char *filename)
 
 int PlayBgm(Bgm* bgm)
 {
+    bgm->is_paused = 0;
     return PlayBgmAl(players[bgm->is_ambient], bgm->loops);
 }
 
@@ -57,13 +59,15 @@ int StopBgm(Bgm* bgm)
 {
     return StopBgmAl(players[bgm->is_ambient]);
 }
-int PauseBgm()
+int PauseBgm(Bgm* bgm)
 {
-    return PauseBgmAl(players[0]);
+    bgm->is_paused = 1;
+    return PauseBgmAl(players[bgm->is_ambient]);
 }
-int UnPauseBgm()
+int UnPauseBgm(Bgm* bgm)
 {
-    return UnpauseBgmAl(players[0]);
+    bgm->is_paused = 0;
+    return UnpauseBgmAl(players[bgm->is_ambient]);
 }
 
 int PlaySfxOneShot(Sfx *sfx, float volume)
